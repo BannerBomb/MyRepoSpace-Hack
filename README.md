@@ -1,5 +1,3 @@
-# MyRepoSpace-Hack
-Writeup on how the MyRepoSpace.com hacks were done 
 #How We Hacked MyRepoSpace
 For this write-up, I'm going to only cover _how_ we were able to gain access to the MRS server, and not the reasons for us doing so.
 
@@ -7,16 +5,22 @@ For this write-up, I'm going to only cover _how_ we were able to gain access to 
 The first bug we used on MRS was a blind SQL injection, found by Ben. This let us access all information stored in the websites databases, but being a blind injection, retrieving anything was very slow. We inadvertently DOS'd the site doing this, bringing it down a few times... Oops.
 
 The URL vulnerable to the injection is: 
-```http://myrepospace.com/register/check1.php?nick=1```
+```
+http://myrepospace.com/register/check1.php?nick=1
+```
 
 Using SQLMap, we could gain a SQL shell with:
-```./sqlmap.py -u "http://myrepospace.com/register/check1.php?nick=1" --sql-shell```
+```
+./sqlmap.py -u "http://myrepospace.com/register/check1.php?nick=1" --sql-shell
+```
 
 **This has not been fixed**
 
 Using this injection, Ben started snooping through the database contents and  discovered something interesting. Located in the `users` database was a column called `forgetToken`. Investigating further, it was revealed that this token was a randomly generated string, 32 characters long, used for password resets. And it was stored in plain text. 
 When you combine this token with the users `id`, you can then do something like this:
-```https://www.myrepospace.com/login/forgot.php?id=215086&v=93bfb5d60cd3778ec5558e29dc3e8c09```
+```
+https://www.myrepospace.com/login/forgot.php?id=215086&v=93bfb5d60cd3778ec5558e29dc3e8c09
+```
 
 And you would be greeted with this:
 
