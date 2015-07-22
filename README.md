@@ -113,3 +113,7 @@ You might not think it's a big deal for a not so sensitive site like MyRepoSpace
 Even if the MyRepoSpace admin claims everything is fixed, it's not. Don't waste your time, go make a repo on GitHub or something.
 
 ~ Andy
+
+Fuck bein' on some chill shit. We go 0 to 100 nigga, real quick.
+
+~haifisch
