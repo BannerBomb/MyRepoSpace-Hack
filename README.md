@@ -1,4 +1,4 @@
-#How We Hacked MyRepoSpace
+# How We Hacked MyRepoSpace
 For this write-up, I'm going to only cover _how_ we were able to gain access to the MRS server, and not the reasons for us doing so.
 
 ### How it started
@@ -29,7 +29,7 @@ And you would be greeted with this:
 
 We could change any users password, access any account that we wanted. The admin account for the site was user id `1`, and with a forgetToken of `0efd8bb79347ada32d249d5f77e6149c`.
 
-###What next?
+### What next?
 So this is fun, we could access any account on the site, including the admin's account - but we wanted more. So I went searching. 
 
 One of MRS's 'tools' is iDeb - a part of the site that allows you to upload a zip file, and it converts it into a deb file. This is very handy, but unfortunately it was written very poorly. 
@@ -41,7 +41,7 @@ So after figuring out how the iDeb system worked, I simply took a popular php sh
 <!-- ![MySQL database on MRS](http://i.imgur.com/5pihv7Z.png) -->
 ![MySQL database on MRS](https://raw.githubusercontent.com/BannerBomb/MyRepoSpace-Hack/master/687474703a2f2f692e696d6775722e636f6d2f3570696876375a2e706e67.png)
 
-###Admin's fix part 1
+### Admin's fix part 1
 The first fix the owner of the site did was moving the temporary directory files were unpacked in to a place we couldn't access - `~/tmp`, the full path being something like `~/tmp/iDeb/July/5599b6ff99dba/zip_contents_here`. You'll notice that random string - this is called a UID and is randomly generated **client side** and sent to the server when you upload a zip file. On the server, iDeb runs this code, creating the directory with the UID:
 
 ```
@@ -61,7 +61,7 @@ curl -F "UPLOAD_IDENTIFIER=../../../public_html" -F "upload=@c99.zip" http://www
 
 This would unpack our zipped file's contents to the root directory of the website... and we were back in. [Discovered by Ben]
 
-###Admins's fix part 2 
+### Admins's fix part 2 
 The next thing the site owner did was make the `public_html` directory `root` owned - meaning we couldn't write any files to it. This was actually a pretty clever move, but was executed fairly bad. He forgot to make any subdirectories root owned. `~/public_html/` was off limits, but `~/public_html/vip` wasn't. 
 
 ```
@@ -70,7 +70,7 @@ curl -F "UPLOAD_IDENTIFIER=../../../public_html/vip" -F "upload=@c99.zip" http:/
 
 We were back in. [Discovered by Ethan]
 
-###Admin's fix part 3
+### Admin's fix part 3
 After this breach, the tool was modified to delete the unpacked files after the deb was created. It would take the zip file, unpack it, use `ar` to make the deb, and then delete everything except for the new deb, and the original zip (both of which were useless to us). 
 
 Ok, no problemo! We'll just stop uploading zip files, and start uploading our php shell directly, since the only file type check was done client side through ajax. 
@@ -81,7 +81,7 @@ curl -F "UPLOAD_IDENTIFIER=../../../public_html/vip" -F "upload=@c99.php" http:/
 
 And once again, we were in. [Discovered by Andy]
 
-###Admin's fix part 4
+### Admin's fix part 4
 So the admin caught on to us uploaded php files, and added a regex check in `upload.php` to ensure no non-zips were uploaded. When we tried to upload our php shell, it returned a scary error telling us we were uploading an invalid file. Awh! But no worries... even though it threw an error at us, it still uploaded our file as usual. Nice job admin!
 
 ```
@@ -90,12 +90,12 @@ curl -F "UPLOAD_IDENTIFIER=../../../public_html/vip" -F "upload=@c99.php" http:/
 
 Ignoring scary errors, we were still in. [Discovered by Andy]
 
-##¯\\\_(&#12484;)_/¯
+## ¯\\\_(&#12484;)_/¯
 That's about it, after the last breach the iDeb tool was properly fixed, and our method of getting in was broken. But have no fear, we released the source code to the site, which will reveal that it is littered with bugs and sql injections! All of these 'hacks' were achieved through exploiting a single file, who knows how many other files are as vulnerable as this one was.
 
 ~herpes
 
-###About passwords
+### About passwords
 Passwords were initially **unsalted md5**, until the 2nd of February when the admin switched to... md5 with a static salt. "MRS-WINS", prepended to the password, in case you were wondering. The admin was [quite proud of this](https://twitter.com/myRepoSpace/status/562613742794706944). He kindly left the old passwords in the database for people who hadn't yet changed theirs. We were able to recover about 5000 through rainbow tables and basic dictionary attacks on a recent mid-range CPU in a few hours alone (for research purposes only - but honestly, us telling you we did this is better than someone else secretly using it for evil).
 
 Password resets always use the same static hash (again, an md5 of the password and the unix time of registration tacked on) and so to get into someone's account you can just grab that and paste it into the password reset url. I don't think these ever got re-generated so if someone got a hold of it, you'd be pretty screwed.
