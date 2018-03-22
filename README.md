@@ -1,7 +1,7 @@
 #How We Hacked MyRepoSpace
 For this write-up, I'm going to only cover _how_ we were able to gain access to the MRS server, and not the reasons for us doing so.
 
-###How it started
+### How it started
 The first bug we used on MRS was a blind SQL injection, found by Ben. This let us access all information stored in the websites databases, but being a blind injection, retrieving anything was very slow. We inadvertently DOS'd the site doing this, bringing it down a few times... Oops.
 
 The URL vulnerable to the injection is: 
@@ -24,7 +24,8 @@ https://www.myrepospace.com/login/forgot.php?id=215086&v=93bfb5d60cd3778ec5558e2
 
 And you would be greeted with this:
 
-![Password reset page](http://i.imgur.com/tlt5kVI.png)
+<!-- ![Password reset page](http://i.imgur.com/tlt5kVI.png) -->
+![Password reset page](https://raw.githubusercontent.com/BannerBomb/MyRepoSpace-Hack/master/687474703a2f2f692e696d6775722e636f6d2f746c74356b56492e706e67.png)
 
 We could change any users password, access any account that we wanted. The admin account for the site was user id `1`, and with a forgetToken of `0efd8bb79347ada32d249d5f77e6149c`.
 
@@ -37,7 +38,8 @@ It worked by moving the uploaded zipped file to a temporary directory, unzipping
 
 So after figuring out how the iDeb system worked, I simply took a popular php shell, c99.php, zipped it, and uploaded it to be packaged as a deb. Once uploaded, I navigated to the newly created temp directory for the upload, and sure enough `c99.php` was the first file listed. We now had full access to the server, including access to the mysql database. [Discovered by Ethan]
 
-![MySQL database on MRS](http://i.imgur.com/5pihv7Z.png)
+<!-- ![MySQL database on MRS](http://i.imgur.com/5pihv7Z.png) -->
+![MySQL database on MRS](https://raw.githubusercontent.com/BannerBomb/MyRepoSpace-Hack/master/687474703a2f2f692e696d6775722e636f6d2f3570696876375a2e706e67.png)
 
 ###Admin's fix part 1
 The first fix the owner of the site did was moving the temporary directory files were unpacked in to a place we couldn't access - `~/tmp`, the full path being something like `~/tmp/iDeb/July/5599b6ff99dba/zip_contents_here`. You'll notice that random string - this is called a UID and is randomly generated **client side** and sent to the server when you upload a zip file. On the server, iDeb runs this code, creating the directory with the UID:
